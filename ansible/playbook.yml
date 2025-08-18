@@ -1,0 +1,36 @@
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Update apt
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: [ "docker.io", "docker-compose" ]
+        state: present
+
+    - name: Create n8n data directory
+      file:
+        path: /home/ubuntu/n8n_data
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Run n8n container
+      community.docker.docker_container:
+        name: n8n
+        image: n8nio/n8n:latest
+        restart_policy: always
+        ports:
+          - "5678:5678"
+        volumes:
+          - /home/ubuntu/n8n_data:/home/node/.n8n
+        env:
+          N8N_BASIC_AUTH_ACTIVE: "true"
+          N8N_BASIC_AUTH_USER: "admin"
+          N8N_BASIC_AUTH_PASSWORD: "admin123"
+          GENERIC_TIMEZONE: "Asia/Kolkata"
+          N8N_SECURE_COOKIE: "false"
