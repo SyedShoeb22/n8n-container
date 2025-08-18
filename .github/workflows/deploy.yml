@@ -1,9 +1,7 @@
 name: Deploy n8n to GCP
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
