@@ -4,39 +4,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  terraform:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.5
+          terraform_version: 1.6.6
+
+      - name: Setup GCP credentials
+        run: |
+          echo '${{ secrets.GCP_KEY }}' > terraform/gcp-key.json
 
       - name: Terraform Init
+        working-directory: terraform
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Get N8N IP
-        id: ip
-        run: |
-          ip=$(terraform output -raw n8n_ip)
-          echo "N8N_IP=$ip" >> $GITHUB_ENV
-
-      - name: Install Ansible
-        run: sudo apt-get update && sudo apt-get install -y ansible python3-pip && pip install docker
-
-      - name: Run Ansible playbook
-        run: |
-          echo "[n8n]" > inventory.ini
-          echo "${{ env.N8N_IP }} ansible_user=ubuntu" >> inventory.ini
-          ansible-playbook -i inventory.ini playbook.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
+        working-directory: terraform
+        run: terraform apply -auto-approve -input=false
